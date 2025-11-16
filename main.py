@@ -1,25 +1,34 @@
-from fastapi import FastAPI
+from datetime import date
+from fastapi import FastAPI, status
 from pydantic import BaseModel
+from typing import List
 
-class Item(BaseModel):
-	name: str
-	price: float
-	is_offer: bool = None
+class Task(BaseModel):
+	id: int
+	entry: str
+	priority: str
+	due: date
+
+fake_db = []
 
 app = FastAPI(title="TaskFlow API", description="TaskFlow")
 
 @app.get("/")
 def home():
-	return {"message": "Hello there"}
+	return {"message": "Welcome to the TaskFlow API"}
 
-@app.get("/items")
-def read_items(skip: int = 0, limit: int = 10):
-	return {"skip": skip, "limit": limit}
+@app.get("/tasks", response_model=List[Task])
+def read_tasks():
+	return fake_db
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int):
-	return {"item_id": item_id}
+@app.get("/tasks/{task_id}")
+def read_task(task_id: int):
+	for task in fake_db:
+		if task.id == task_id:
+			return task
+	return {"error": f"Task with ID {task_id} not found"}
 
-@app.post("/items")
-def add_item(item: Item):
-	return {"item": item}
+@app.post("/tasks", status_code=status.HTTP_201_CREATED, response_model=Task)
+def create_entry(task: Task):
+	fake_db.append(task)
+	return task
