@@ -15,6 +15,10 @@ app = FastAPI(title="TaskFlow API", description="TaskFlow")
 
 DB_PATH = "tasks.json"
 
+def save_db():
+    with open(DB_PATH, "w") as file:
+        json.dump([task.dict() for task in cached_db], file, indent=2, default=str)
+
 def load_db():
     global cached_db
     if not os.path.exists(DB_PATH):
@@ -32,14 +36,7 @@ def load_db():
                 except json.JSONDecodeError:
                     cached_db = []
                     save_db()
-
-
 load_db()
-
-def save_db():
-    with open(DB_PATH, "w") as file:
-
-        json.dump([task.dict() for task in cached_db], file, indent=2, default=str)
 
 @app.get("/")
 def home():
