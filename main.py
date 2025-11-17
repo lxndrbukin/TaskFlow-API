@@ -1,4 +1,6 @@
 from datetime import date
+from http.client import HTTPException
+
 from fastapi import FastAPI, status
 from pydantic import BaseModel
 from typing import List
@@ -53,6 +55,17 @@ def read_entry(task_id: int):
         if task.id == task_id:
             return task
     return {"error": f"Task with ID {task_id} not found"}
+
+@app.put("/tasks/{task_id}")
+def update_entry(task_id: int, updated_task: Task):
+    for i, task in enumerate(cached_db):
+        if task.id == task_id:
+            updated = task.model_copy(update=updated_task.model_dump(exclude_unset=True))
+            cached_db[i] = updated
+            save_db()
+            return updated
+    raise HTTPException()
+
 
 @app.post("/tasks", status_code=status.HTTP_201_CREATED, response_model=Task)
 def create_entry(task: Task):
