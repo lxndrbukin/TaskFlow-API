@@ -44,11 +44,11 @@ def home():
     return {"message": "Welcome to the TaskFlow API"}
 
 @app.get("/tasks", response_model=List[Task])
-def read_tasks():
+def read_entries():
     return cached_db
 
 @app.get("/tasks/{task_id}")
-def read_task(task_id: int):
+def read_entry(task_id: int):
     for task in cached_db:
         if task.id == task_id:
             return task
