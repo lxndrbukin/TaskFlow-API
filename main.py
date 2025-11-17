@@ -14,6 +14,7 @@ class Task(BaseModel):
 app = FastAPI(title="TaskFlow API", description="TaskFlow")
 
 DB_PATH = "tasks.json"
+cached_db: List[Task] = []
 
 def save_db():
     with open(DB_PATH, "w") as file:
