@@ -60,4 +60,4 @@ def create_entry(task: Task):
     new_task = task.model_copy(update={"id": new_id})
     cached_db.append(new_task)
     save_db()
-    return task
+    return new_task
