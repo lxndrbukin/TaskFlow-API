@@ -2,13 +2,19 @@ from datetime import date
 from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel
 from typing import List
+from enum import Enum
 import json
 import os
+
+class Priority(str, Enum):
+    High = "High"
+    Medium = "Medium"
+    Low = "Low"
 
 class Task(BaseModel):
     id: int
     entry: str
-    priority: str
+    priority: Priority
     due: date
 
 app = FastAPI(title="TaskFlow API", description="TaskFlow")
