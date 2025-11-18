@@ -52,7 +52,7 @@ def read_entry(task_id: int):
     for task in cached_db:
         if task.id == task_id:
             return task
-    return {"error": f"Task with ID {task_id} not found"}
+    raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
 
 @app.put("/tasks/{task_id}")
 def update_entry(task_id: int, updated_task: Task):
@@ -64,6 +64,14 @@ def update_entry(task_id: int, updated_task: Task):
             return updated
     raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
 
+@app.delete("/tasks/{task_id}")
+def remove_entry(task_id: int):
+    for i, task in enumerate(cached_db):
+        if task.id == task_id:
+            cached_db.pop(i)
+            save_db()
+            return
+    raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
 
 @app.post("/tasks", status_code=status.HTTP_201_CREATED, response_model=Task)
 def create_entry(task: Task):
