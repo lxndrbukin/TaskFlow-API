@@ -50,13 +50,20 @@ def home():
     return {"message": "Welcome to the TaskFlow API"}
 
 @app.get("/tasks", response_model=List[Task])
-def read_entries(skip: int = 0, limit: int = 100, order: str = "asc"):
+def read_entries(skip: int = 0, limit: int = 100, sort: str = "id", order: str = "asc", priority: Priority | None = None):
+    tasks = cached_db.copy()
     if order == "desc":
         reverse = True
     else:
         reverse = False
+    if priority:
+        tasks = [t for t in tasks if t.priority.value.lower() == priority.lower()]
+    match sort:
+        case "priority": key = lambda t: t.priority.value
+        case _: key = lambda t: t.id
+    tasks = sorted(tasks, key=key, reverse=reverse)
     end = skip + limit
-    return sorted(cached_db[skip:end], key=lambda t: t.id, reverse=reverse)
+    return tasks[skip:end]
 
 @app.get("/tasks/{task_id}")
 def read_entry(task_id: int):
