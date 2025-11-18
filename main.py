@@ -80,3 +80,13 @@ def create_entry(task: Task):
     cached_db.append(new_task)
     save_db()
     return new_task
+
+@app.get("/search")
+def search(q: str):
+    search_results = []
+    split_query = q.lower().split()
+    for task in cached_db:
+        if any(term in task.entry.lower() for term in split_query):
+            result = task.model_copy()
+            search_results.append(result)
+    return search_results
