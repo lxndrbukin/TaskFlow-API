@@ -53,8 +53,14 @@ load_db()
 def home():
     return {"message": "Welcome to the TaskFlow API"}
 
-@app.get("/tasks", response_model=List[Task])
-def read_entries(skip: int = 0, limit: int = 100, sort: str = "id", order: str = "asc", priority: Priority | None = None):
+@app.get("/tasks", response_model=PaginatedResponse)
+def read_entries(skip: int = 0,
+                 limit: int = 100,
+                 order: str = "asc",
+                 priority: Priority | None = None,
+                 due_before: date | None = None,
+                 due_after: date | None = None,
+                 sort: str = "id"):
     tasks = cached_db.copy()
     if order == "desc":
         reverse = True
@@ -62,6 +68,10 @@ def read_entries(skip: int = 0, limit: int = 100, sort: str = "id", order: str =
         reverse = False
     if priority:
         tasks = [t for t in tasks if t.priority.value.lower() == priority.lower()]
+    if due_before:
+        tasks = [t for t in tasks if t.due <= due_before]
+    if due_after:
+        tasks = [t for t in tasks if t.due >= due_after]
     match sort:
         case "priority": key = lambda t: t.priority.value
         case "entry": key = lambda t: t.entry.lower()
