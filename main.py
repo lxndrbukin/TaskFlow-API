@@ -50,8 +50,9 @@ def home():
     return {"message": "Welcome to the TaskFlow API"}
 
 @app.get("/tasks", response_model=List[Task])
-def read_entries():
-    return cached_db
+def read_entries(skip: int = 0, limit: int = 100):
+    end = skip + limit
+    return cached_db[skip:end] if end <= len(cached_db) else cached_db[skip:]
 
 @app.get("/tasks/{task_id}")
 def read_entry(task_id: int):
