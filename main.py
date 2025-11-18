@@ -17,6 +17,10 @@ class Task(BaseModel):
     priority: Priority
     due: date
 
+class PaginatedResponse(BaseModel):
+    data: List[Task]
+    pagination: dict
+
 app = FastAPI(title="TaskFlow API", description="TaskFlow")
 
 DB_PATH = "tasks.json"
@@ -63,7 +67,15 @@ def read_entries(skip: int = 0, limit: int = 100, sort: str = "id", order: str =
         case _: key = lambda t: t.id
     tasks = sorted(tasks, key=key, reverse=reverse)
     end = skip + limit
-    return tasks[skip:end]
+    return {
+        "data": tasks[skip:end],
+        "pagination": {
+            "total": len(tasks),
+            "skip": skip,
+            "limit": limit,
+            "has_more": skip + limit < len(tasks)
+        }
+    }
 
 @app.get("/tasks/{task_id}")
 def read_entry(task_id: int):
