@@ -1,7 +1,5 @@
 from datetime import date
-from http.client import HTTPException
-
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel
 from typing import List
 import json
@@ -64,7 +62,7 @@ def update_entry(task_id: int, updated_task: Task):
             cached_db[i] = updated
             save_db()
             return updated
-    raise HTTPException()
+    raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
 
 
 @app.post("/tasks", status_code=status.HTTP_201_CREATED, response_model=Task)
