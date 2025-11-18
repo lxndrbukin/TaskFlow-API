@@ -64,6 +64,7 @@ def read_entries(skip: int = 0, limit: int = 100, sort: str = "id", order: str =
         tasks = [t for t in tasks if t.priority.value.lower() == priority.lower()]
     match sort:
         case "priority": key = lambda t: t.priority.value
+        case "entry": key = lambda t: t.entry.lower()
         case _: key = lambda t: t.id
     tasks = sorted(tasks, key=key, reverse=reverse)
     end = skip + limit
