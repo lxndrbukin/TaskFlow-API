@@ -50,9 +50,13 @@ def home():
     return {"message": "Welcome to the TaskFlow API"}
 
 @app.get("/tasks", response_model=List[Task])
-def read_entries(skip: int = 0, limit: int = 100):
+def read_entries(skip: int = 0, limit: int = 100, order: str = "asc"):
+    if order == "desc":
+        reverse = True
+    else:
+        reverse = False
     end = skip + limit
-    return cached_db[skip:end] if end <= len(cached_db) else cached_db[skip:]
+    return sorted(cached_db[skip:end], key=lambda t: t.id, reverse=reverse)
 
 @app.get("/tasks/{task_id}")
 def read_entry(task_id: int):
