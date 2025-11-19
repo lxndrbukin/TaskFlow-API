@@ -28,7 +28,7 @@ cached_db: List[Task] = []
 
 def save_db():
     with open(DB_PATH, "w") as file:
-        json.dump([task.dict() for task in cached_db], file, indent=2, default=str)
+        json.dump([task.model_dump() for task in cached_db], file, indent=2, default=str)
 
 def load_db():
     global cached_db
@@ -51,9 +51,14 @@ load_db()
 
 @app.get("/")
 def home():
-    return {"message": "Welcome to the TaskFlow API"}
+    return {
+        "message": "TaskFlow API",
+        "version": "1.0",
+        "tasks_count": len(cached_db),
+        "current_date": str(date.today()),
+    }
 
-@app.get("/tasks", response_model=PaginatedResponse)
+@app.get("/tasks", status_code=status.HTTP_200_OK ,response_model=PaginatedResponse)
 def read_entries(skip: int = 0,
                  limit: int = 100,
                  order: str = "asc",
@@ -62,15 +67,12 @@ def read_entries(skip: int = 0,
                  due_after: date | None = None,
                  sort: str = "id"):
     tasks = cached_db.copy()
-    if order == "desc":
-        reverse = True
-    else:
-        reverse = False
-    if priority:
+    reverse = order == "desc"
+    if priority is not None:
         tasks = [t for t in tasks if t.priority.value.lower() == priority.lower()]
-    if due_before:
+    if due_before is not None:
         tasks = [t for t in tasks if t.due <= due_before]
-    if due_after:
+    if due_after is not None:
         tasks = [t for t in tasks if t.due >= due_after]
     match sort:
         case "priority": key = lambda t: t.priority.value
@@ -88,7 +90,7 @@ def read_entries(skip: int = 0,
         }
     }
 
-@app.get("/tasks/{task_id}")
+@app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK, response_model=Task)
 def read_entry(task_id: int):
     for task in cached_db:
         if task.id == task_id:
@@ -105,7 +107,7 @@ def update_entry(task_id: int, updated_task: Task):
             return updated
     raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
 
-@app.delete("/tasks/{task_id}")
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_entry(task_id: int):
     for i, task in enumerate(cached_db):
         if task.id == task_id:
