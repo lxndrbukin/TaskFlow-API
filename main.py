@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import datetime
 from fastapi import FastAPI, status, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 from enum import Enum
 import json
@@ -15,7 +15,9 @@ class Task(BaseModel):
     id: int
     entry: str
     priority: Priority
-    due: date
+    due: datetime
+    completed: bool = False
+    completed_at: datetime | None = Field(examples=[None])
 
 class PaginatedResponse(BaseModel):
     data: List[Task]
@@ -55,7 +57,7 @@ def home():
         "message": "TaskFlow API",
         "version": "1.0",
         "tasks_count": len(cached_db),
-        "current_date": str(date.today()),
+        "current_date": str(datetime.today()),
     }
 
 @app.get("/tasks", status_code=status.HTTP_200_OK ,response_model=PaginatedResponse)
@@ -63,8 +65,8 @@ def read_entries(skip: int = 0,
                  limit: int = 100,
                  order: str = "asc",
                  priority: Priority | None = None,
-                 due_before: date | None = None,
-                 due_after: date | None = None,
+                 due_before: datetime | None = None,
+                 due_after: datetime | None = None,
                  sort: str = "id"):
     tasks = cached_db.copy()
     reverse = order == "desc"

@@ -1,4 +1,4 @@
-#!/home/lxndrbukin/projects/python/TaskFlow-API/.venv/bin/python3
+#!/home/lxndrbukin/Coding/python/projects/taskflowapi/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
