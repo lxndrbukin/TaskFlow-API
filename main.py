@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from enum import Enum
 import json
 import os
@@ -18,6 +18,14 @@ class Task(BaseModel):
     due: datetime
     completed: bool = False
     completed_at: datetime | None = Field(examples=[None])
+
+class TaskUpdate(BaseModel):
+    id: Optional[int]
+    entry: Optional[str]
+    priority: Optional[Priority]
+    due: Optional[datetime]
+    completed: Optional[bool] = Field(default=None)
+    completed_at: Optional[datetime] = Field(examples=[None])
 
 class PaginatedResponse(BaseModel):
     data: List[Task]
@@ -99,11 +107,11 @@ def read_entry(task_id: int):
             return task
     raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
 
-@app.put("/tasks/{task_id}")
-def update_entry(task_id: int, updated_task: Task):
+@app.patch("/tasks/{task_id}")
+def update_entry(task_id: int, update: TaskUpdate):
     for i, task in enumerate(cached_db):
         if task.id == task_id:
-            updated = task.model_copy(update=updated_task.model_dump(exclude_unset=True))
+            updated = task.model_copy(update=update.model_dump(exclude_unset=True))
             cached_db[i] = updated
             save_db()
             return updated
