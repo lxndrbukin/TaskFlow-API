@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import FastAPI, status, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from typing import List, Optional
 from enum import Enum
 import json
@@ -18,6 +18,10 @@ class Task(BaseModel):
     due: datetime
     completed: bool = False
     completed_at: datetime | None = Field(examples=[None])
+
+    @computed_field
+    def is_overdue(self) -> bool:
+        return self.due < datetime.now(timezone.utc) and self.completed_at is None
 
 class TaskUpdate(BaseModel):
     id: Optional[int]
@@ -112,6 +116,7 @@ def update_entry(task_id: int, update: TaskUpdate):
     for i, task in enumerate(cached_db):
         if task.id == task_id:
             updated = task.model_copy(update=update.model_dump(exclude_unset=True))
+            updated.completed_at = datetime.now(timezone.utc) if updated.completed else None
             cached_db[i] = updated
             save_db()
             return updated
