@@ -7,14 +7,14 @@ import json
 import os
 
 class Priority(str, Enum):
-    High = "High"
-    Medium = "Medium"
-    Low = "Low"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 class Task(BaseModel):
     id: int
     entry: str
-    priority: Priority
+    priority: Priority = Field(default="medium")
     due: datetime
     completed: bool = False
     completed_at: datetime | None = Field(examples=[None])
