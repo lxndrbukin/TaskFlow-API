@@ -3,8 +3,25 @@ from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel, Field, computed_field
 from typing import List, Optional
 from enum import Enum
+import sqlite3
 import json
 import os
+
+conn = sqlite3.connect("tasks.db")
+
+create_db = '''
+    CREATE TABLE tasks(
+        id INTEGER PRIMARY KEY,
+        entry TEXT NOT NULL,
+        priority TEXT NOT NULL,
+        due DATETIME,
+        completed BOOLEAN,
+        completed_at DATETIME
+    )
+'''
+
+if not conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'").fetchone():
+    conn.cursor().execute(create_db)
 
 class Priority(str, Enum):
     HIGH = "high"
@@ -37,7 +54,7 @@ class PaginatedResponse(BaseModel):
 
 app = FastAPI(title="TaskFlow API", description="TaskFlow")
 
-DB_PATH = "tasks.json"
+DB_PATH = "tasks.db"
 cached_db: List[Task] = []
 
 def save_db():
