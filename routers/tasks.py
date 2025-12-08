@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import sqlite3
 from fastapi import APIRouter
-from fastapi import Depends, FastAPI, status, HTTPException
+from fastapi import Depends, status, HTTPException
 from models import Task, TaskUpdate, Priority, PaginatedResponse
 from db import load_db, row_to_task
 
@@ -17,30 +17,34 @@ def read_entries(skip: int = 0,
                  sort: str = "id",
                  db: sqlite3.Connection = Depends(load_db)
                 ):
-    end = skip + limit
     cursor = db.cursor()
-    cursor.execute("SELECT * FROM tasks")
-    rows = cursor.fetchall()
-    tasks = [row_to_task(row) for row in rows]
+    where_clauses = []
+    params = []
     reverse = order == "desc"
     if priority is not None:
-        tasks = [t for t in tasks if t.priority.value.lower() == priority.lower()]
+        where_clauses.append("priority = ?")
+        params.append(priority.value)
     if due_before is not None:
-        tasks = [t for t in tasks if t.due <= due_before]
+        where_clauses.append("due <= ?")
+        params.append(due_before.isoformat())
     if due_after is not None:
-        tasks = [t for t in tasks if t.due >= due_after]
-    match sort:
-        case "priority": key = lambda t: t.priority.value
-        case "entry": key = lambda t: t.entry.lower()
-        case _: key = lambda t: t.id
-    tasks = sorted(tasks, key=key, reverse=reverse)
+        where_clauses.append("due >= ?")
+        params.append(due_after.isoformat())
+    params += [limit, skip]
+    sort_map = {"id": "id", "priority": "priority", "entry": "LOWER(entry)"}.get(sort, "id")
+    base_query = "SELECT * FROM tasks"
+    if where_clauses:
+        base_query += f" WHERE {' AND '.join(where_clauses)}"
+    base_query += f" ORDER BY {sort_map} {'DESC' if reverse else 'ASC'} LIMIT ? OFFSET ?"
+    cursor.execute(base_query, params)
+    rows = cursor.fetchall()
+    tasks = [row_to_task(row) for row in rows]
     return {
-        "data": tasks[skip:end],
+        "data": tasks,
         "pagination": {
             "total": len(tasks),
             "skip": skip,
-            "limit": limit,
-            "has_more": skip + limit < len(tasks)
+            "limit": limit
         }
     }
 
