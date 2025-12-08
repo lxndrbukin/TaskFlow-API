@@ -129,7 +129,7 @@ def read_entry(task_id: int, db: sqlite3.Connection = Depends(load_db)):
     row = cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
-    return row_to_task(cursor.fetchone())
+    return row_to_task(row)
 
 @app.patch("/tasks/{task_id}")
 def update_entry(task_id: int, update_data: TaskUpdate, db: sqlite3.Connection = Depends(load_db)):
