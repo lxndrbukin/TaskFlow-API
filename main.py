@@ -22,20 +22,24 @@ def home(db: sqlite3.Connection = Depends(load_db)):
     }
 
 @app.get("/search")
-def search(q: str, db: sqlite3.Connection = Depends(load_db)):
+def search(q: str, limit: int = 20, db: sqlite3.Connection = Depends(load_db)):
     if not q.strip():
         raise HTTPException(status_code=400, detail="Query can't be empty")
+    stop_words = set(["and", "but", "the", "a", "an", "or", "in", "on"])
     cursor = db.cursor()
-    split_query = q.lower().split()
+    split_search_query = [term for term in q.lower().split() if term not in stop_words]
+    if not split_search_query:
+        return []
     where_clauses = []
-    for term in split_query:
+    for term in split_search_query:
         where_clauses.append(f"LOWER(entry) LIKE ?")
-    params = [f"%{term}%" for term in split_query]
-    search_tasks = f"""
-        SELECT * FROM tasks 
-        WHERE {' OR '.join(where_clauses)} 
-    """
-    cursor.execute(search_tasks, params)
+    params = [f"%{term}%" for term in split_search_query]
+    base_query = "SELECT * FROM tasks"
+    if where_clauses:
+        base_query += f" WHERE {' OR '.join(where_clauses)}"
+    base_query += f" LIMIT ?"
+    params.append(limit)
+    cursor.execute(base_query, params)
     rows = cursor.fetchall()
     results = [row_to_task(row) for row in rows]
     return results
