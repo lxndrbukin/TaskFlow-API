@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field, computed_field
 from typing import List, Optional
 from enum import Enum
 
+# Tasks
 class Priority(str, Enum):
     HIGH = "high"
     MEDIUM = "medium"
@@ -30,3 +31,12 @@ class TaskUpdate(BaseModel):
 class PaginatedResponse(BaseModel):
     data: List[Task]
     pagination: dict
+
+
+# Users
+class User(BaseModel):
+    id: int
+    username: str
+    password: str
+    role: str = Field(default="user")
+    signup_date: datetime = Field(default=datetime.now(timezone.utc))
