@@ -2,9 +2,9 @@ from datetime import datetime
 from models import Task, Priority
 import sqlite3
 
-DB_PATH = "tasks.db"
+DB_PATH = "taskflow.db"
 
-db_table = '''
+tasks_db_table = '''
     CREATE TABLE IF NOT EXISTS tasks(
         id INTEGER PRIMARY KEY,
         entry TEXT NOT NULL,
@@ -15,9 +15,20 @@ db_table = '''
     )
 '''
 
+users_db_table = '''
+    CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY,
+        username TEXT UNIQUE,
+        password TEXT NOT NULL,
+        role TEXT DEFAULT 'user',
+        signup_date DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+'''
+
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
-        conn.execute(db_table)
+        conn.execute(tasks_db_table)
+        conn.execute(users_db_table)
         conn.commit()
 
 def load_db():
