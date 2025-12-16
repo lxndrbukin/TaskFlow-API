@@ -3,9 +3,11 @@ from fastapi import Depends, FastAPI, HTTPException
 import sqlite3
 from db import init_db, load_db, row_to_task
 from routers.tasks import tasks_router
+from routers.auth import auth_router
 
 app = FastAPI(title="TaskFlow API", description="TaskFlow")
 app.include_router(tasks_router)
+app.include_router(auth_router)
 
 init_db()
 
