@@ -12,7 +12,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED)
 def register(form: User, db: sqlite3.Connection = Depends(load_db)):
 	cursor = db.cursor()
-	cursor.execute('SELECT COUNT(*) FROM users WHERE username = ?', (form.username,))
+	cursor.execute("SELECT COUNT(*) FROM users WHERE username = ?", (form.username,))
 	row = cursor.fetchone()
 	if row[0] > 0:
 		raise HTTPException(status_code=409, detail="Username taken")
@@ -20,8 +20,7 @@ def register(form: User, db: sqlite3.Connection = Depends(load_db)):
 		raise HTTPException(status_code=400, detail="Password too long")
 	form.password = pwd_context.hash(form.password)
 	insert_user = '''
-        INSERT INTO users(username, password)
-        VALUES(?, ?)
+        INSERT INTO users(username, password) VALUES(?, ?)
     '''
 	values = (
 		form.username,
@@ -30,3 +29,11 @@ def register(form: User, db: sqlite3.Connection = Depends(load_db)):
 	cursor.execute(insert_user, values)
 	db.commit()
 	return {"msg": "User registered successfully", "username": form.username}
+
+@auth_router.post("/login", status_code=status.HTTP_200_OK)
+def login(form: OAuth2PasswordRequestForm = Depends(), db: sqlite3.Connection = Depends(load_db)):
+	cursor = db.cursor()
+	cursor.execute("SELECT * FROM users WHERE username = ?", (form.username,))
+	user_row = cursor.fetchone()
+	if not user_row or not pwd_context.verify(form.password, user_row['password']):
+		raise HTTPException(status_code=401, detail="Invalid credentials")
